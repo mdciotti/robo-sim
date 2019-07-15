@@ -1,8 +1,7 @@
 import { Simulation, SimState } from './Simulation.js';
 import { Entity, AutoMarker, ManualMarker } from './Entity.js';
-// import { vec3, vec4 } from 'gl-matrix';
-/// <reference path="../node_modules/@types/gl-matrix/index.d.ts"/>
-const { vec3, vec4 } = glMatrix;
+// import { vec3, vec4 } from '../node_modules/gl-matrix/esm/index.js';
+import { vec3, vec4 } from 'gl-matrix';
 
 interface CameraOptions {
   width: number;

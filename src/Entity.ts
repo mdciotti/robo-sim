@@ -1,8 +1,8 @@
 import { Simulation, SimState } from './Simulation.js';
 import { Inspector } from './Inspector.js';
 import EventTargetShim from './EventTargetShim.js';
-// import { vec3, vec4 } from 'gl-matrix';
-const { vec3, vec4 } = glMatrix;
+// import { vec3, vec4 } from '../node_modules/gl-matrix/esm/index.js';
+import { vec3, vec4 } from 'gl-matrix';
 
 export class Entity extends EventTargetShim {
   public position: vec3;

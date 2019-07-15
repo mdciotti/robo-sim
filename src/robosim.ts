@@ -1,10 +1,8 @@
 import { Simulation, SimState } from './Simulation.js';
 import { AutoMarker, ManualMarker } from './Entity.js';
 import { Robot } from './Robot.js';
-// import * as vec3 from '../node_modules/gl-matrix/esm/vec3.js';
-// import { vec3, vec4 } from 'gl-matrix';
-/// <reference path="gl-matrix"/>
-const { vec3, vec4 } = glMatrix;
+// import { vec3, vec4 } from '../node_modules/gl-matrix/esm/index.js';
+import { vec3, vec4 } from 'gl-matrix';
 
 function formatTime(seconds: number) {
   let minutes = Math.floor(seconds / 60);

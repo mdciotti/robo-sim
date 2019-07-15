@@ -4,21 +4,71 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "type": "typescript",
-            "tsconfig": "tsconfig.json",
-            "problemMatcher": [
-                "$tsc"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
+            "label": "Clean",
+            "type": "shell",
+            "command": "rm",
+            "args": ["-r", "dist"],
             "presentation": {
                 "echo": true,
                 "reveal": "silent",
                 "focus": false,
                 "panel": "shared",
-                "showReuseMessage": true,
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Compile",
+            "type": "typescript",
+            "tsconfig": "tsconfig.json",
+            "problemMatcher": [
+                "$tsc"
+            ],
+            "dependsOn": [
+                "Clean"
+            ],
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Bundle",
+            "type": "shell",
+            "command": "./node_modules/.bin/rollup",
+            "args": [
+                "-c"
+            ],
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "label": "Build",
+            "dependsOn": [
+                "Bundle"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
                 "clear": false
             }
         }

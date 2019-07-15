@@ -8,8 +8,8 @@ import {
   threshold,
   blob,
 } from './image-util.js';
-// import { vec3, vec4 } from 'gl-matrix';
-const { vec3, vec4 } = glMatrix;
+// import { vec3, vec4 } from '../lib/gl-matrix/esm/index.js';
+import { vec3, vec4 } from 'gl-matrix';
 
 export class Robot extends Entity {
   private camera: Camera;

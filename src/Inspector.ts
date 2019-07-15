@@ -1,5 +1,4 @@
-// import { vec3, vec4 } from 'gl-matrix';
-// const { vec3, vec4 } = glMatrix;
+import { vec3 } from 'gl-matrix';
 
 export interface InspectorView {
   name: string;

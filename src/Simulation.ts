@@ -1,7 +1,7 @@
-import { Entity } from './Entity.js';
-import EventTargetShim from './EventTargetShim.js';
-// import { vec2 } from 'gl-matrix';
-const { vec2 } = glMatrix;
+import { Entity } from './Entity';
+import EventTargetShim from './EventTargetShim';
+// import { vec2 } from '../lib/gl-matrix/esm/index.js';
+import { vec2 } from 'gl-matrix';
 
 export type SimState = {
   /** the current simulation time in seconds */

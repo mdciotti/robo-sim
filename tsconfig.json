@@ -1,13 +1,14 @@
 {
     "compilerOptions": {
         "module": "es6",
+        // "module": "amd",
         "target": "es2017",
         "jsx": "preserve",
         "strict": true,
         "strictNullChecks": true,
         "alwaysStrict": true,
         // "sourceMap": true,
-        // "outFile": "robosim.bundle.js"
+        // "outFile": "dist/robosim.bundle.js",
         // "declaration": true,
         // "declarationDir": "node_modules/@types",
         "types": [],

@@ -12,12 +12,8 @@ export default class EventTargetShim {
 		if (existing) existing.delete(listener);
 	}
 
-	public dispatchEvent(event: Event|CustomEvent<*>) {
+	public dispatchEvent(event: Event|CustomEvent<any>) {
 		const existing = this.listeners.get(event.type);
-		if (existing) {
-			for (let listener of existing.values()) {
-				listener(event);
-			}
-		}
+		if (existing) for (let listener of existing.values()) listener(event);
 	}
 }
