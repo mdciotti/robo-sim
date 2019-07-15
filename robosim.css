@@ -1,0 +1,153 @@
+@import './icons.css';
+
+:root {
+  height: 100vh;
+  overflow: hidden;
+  --border: #191e2a;
+  --focus-ring: #505867;
+  --side-bg: #1f2430;
+  --content-bg: #232834;
+  --white-muted: #60697a;
+  --logo: #23a9f2;
+
+  --red: #f28779;
+  --red-orange: #f29e74;
+  --orange: #ffa759;
+  --yellow: #ffd580;
+  --green: #bae67e;
+  --cyan: #95e6cb;
+  --blue: #73d0ff;
+  --purple: #d4bfff;
+  --grey: #5c6773;
+  --white: #cbccc6;
+}
+
+body {
+  margin: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: grid;
+  grid-template-areas: "b c" "b a";
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 25px 1fr;
+  background-color: var(--content-bg);
+  color: var(--white);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+}
+
+body > .inspector {
+  grid-area: b;
+  border: 1px solid var(--border);
+  border-right-style: solid;
+  padding: 0;
+  margin: 0;
+  overflow: auto;
+  font-size: 12px;
+  background-color: var(--side-bg);
+}
+
+body > .inspector > legend {
+  display: none;
+}
+
+.inspector > fieldset {
+  border: none;
+  padding: 0;
+  margin: 0;
+  position: relative;
+}
+
+.inspector > fieldset > legend {
+  left: 0;
+  top: 0;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  opacity: 0;
+  transition: opacity 100ms ease-out 200ms;
+  -moz-user-select: none;
+  user-select: none;
+}
+
+.inspector > fieldset:hover > legend {
+  opacity: 1;
+  transition: opacity 100ms ease-out;
+}
+
+.inspector > .view.image-data > canvas {
+  display: block;
+  width: 192px;
+}
+
+[role="toolbar"] {
+  grid-area: c;
+  display: flex;
+  align-items: stretch;
+  background-color: var(--side-bg);
+  font-size: 14px;
+  border-color: var(--border);
+  border-width: 1px;
+  border-bottom-style: solid;
+  height: 24px;
+  line-height: 24px;
+  -moz-user-select: none;
+  user-select: none;
+  cursor: default;
+}
+
+[role="toolbar"] > * {
+  flex: 0 0 auto;
+}
+
+[role="toolbar"] > button.ms-Icon {
+  font-size: 16px;
+  -moz-appearance: none;
+  appearance: none;
+  background: none;
+  border: none;
+  margin: 0;
+  color: var(--blue);
+}
+
+[role="toolbar"] > button:focus {
+  outline-offset: -1px;
+  background: var(--border);
+}
+
+[role="toolbar"] > button::-moz-focus-inner {
+  border: 0;
+}
+
+[role="toolbar"] > button.ms-Icon:not(:disabled):hover {
+  background: var(--border);
+  border: none;
+}
+
+[role="toolbar"] > button.ms-Icon:disabled {
+  color: var(--white-muted);
+}
+
+[role="toolbar"] > input {
+  padding: 0;
+  background: none;
+  border: none;
+  font: inherit;
+  color: var(--white-muted);
+  text-align: center;
+  font-family: 'Fira Code', 'Consolas', monospace;
+}
+[role="toolbar"] > output {
+  font: inherit;
+  color: var(--white-muted);
+  text-align: center;
+  /* padding: 0 8px; */
+}
+
+canvas.pixelated {
+  -ms-interpolation-mode: nearest-neighbor;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -o-crisp-edges;
+  image-rendering: pixelated;
+}

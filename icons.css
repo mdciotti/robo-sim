@@ -1,0 +1,12 @@
+.icon {
+	font-size: 16px;
+	line-height: 1;
+}
+
+.icon.apple {
+	font-family: 'SF Pro Text';
+	font-weight: thin;
+}
+
+.icon.apple.play::before { content: '\56256\56963'; }
+.icon.apple.pause::before { content: '\56256\56965'; }

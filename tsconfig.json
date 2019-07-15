@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "module": "es6",
+        "target": "es2017",
+        "jsx": "preserve",
+        "strict": true,
+        "strictNullChecks": true,
+        "alwaysStrict": true,
+        // "sourceMap": true,
+        // "outFile": "robosim.bundle.js"
+        // "declaration": true,
+        // "declarationDir": "node_modules/@types",
+        "types": [],
+        "outDir": "dist",
+        "rootDir": "src"
+    },
+    "exclude": [
+        "lib",
+        "node_modules",
+        "**/node_modules/*"
+    ]
+}
