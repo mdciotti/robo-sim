@@ -1,3 +1,4 @@
+import { vec2 } from 'gl-matrix';
 
 /** Maps a full-range (single-channel) image to a binary image at the threshold value specified. */
 export function threshold(image: ImageData2<any>, value: number): ImageData2<boolean[]> {
@@ -49,7 +50,7 @@ export interface blob {
   /** the number of pixels in this blob */
   count: number;
   /** the centroid of this blob (row, col) */
-  centroid: [number, number];
+  centroid: vec2;
 }
 
 // [ ][ ][ ][1][ ]
@@ -97,7 +98,7 @@ export function blobify(image: ImageData2<boolean[]>): Map<number, blob> {
       const label = labels[i * width + j];
       if (label === 0) continue;
       const b = blobs.get(label);
-      if (!b) blobs.set(label, { count: 1, centroid: [i, j] });
+      if (!b) blobs.set(label, { count: 1, centroid: vec2.fromValues(i, j) });
       else {
         b.count += 1;
         b.centroid[0] += i;

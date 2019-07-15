@@ -1,7 +1,7 @@
 import { SimState, Simulation } from './Simulation.js';
 import { Entity } from './Entity.js';
 import { Camera } from './Camera.js';
-import { ImageDataView, PlotTimeSeriesView } from './Inspector.js';
+import { ImageDataView, PlotTimeSeriesView, PlotXYView } from './Inspector.js';
 import {
   colorDistance,
   blobify,
@@ -9,7 +9,7 @@ import {
   blob,
 } from './image-util.js';
 // import { vec3, vec4 } from '../lib/gl-matrix/esm/index.js';
-import { vec3, vec4 } from 'gl-matrix';
+import { vec3, vec4, vec2 } from 'gl-matrix';
 
 export class Robot extends Entity {
   private camera: Camera;
@@ -19,7 +19,9 @@ export class Robot extends Entity {
   private view1: ImageDataView<boolean[]>;
   private view2: ImageDataView<Float32Array>;
   private view3: PlotTimeSeriesView;
-  private dx: number = 0;;
+  private view4: PlotXYView;
+  private dx: number = 0;
+  private maxBlob: blob = { centroid: vec2.create(), count: 0 };
 
   constructor(pos = vec3.create(), dir = vec4.create()) {
     super(pos, dir);
@@ -35,9 +37,11 @@ export class Robot extends Entity {
     this.view2 = new ImageDataView({ width: 64, height: 64 });
     this.view2.name = 'detect red';
     this.view3 = new PlotTimeSeriesView();
+    this.view4 = new PlotXYView();
     this.inspector.addView(this.view0);
     this.inspector.addView(this.view2);
     this.inspector.addView(this.view1);
+    this.inspector.addView(this.view4);
     this.inspector.addView(this.view3);
     // document.body.appendChild(this.output1);
     // document.body.appendChild(this.output2);
@@ -45,14 +49,31 @@ export class Robot extends Entity {
 
   public initialize(sim: Simulation): void {
     this.camera.initialize(sim);
-    sim.addEventListener('pause', () => this.view3.paused = true);
-    sim.addEventListener('resume', () => this.view3.paused = false);
-    sim.addEventListener('stop', () => this.view3.stop());
-    sim.addEventListener('start', () => this.view3.start());
+    sim.addEventListener('pause', () => {
+      this.view3.paused = true;
+      this.view4.paused = true;
+    });
+    sim.addEventListener('resume', () => {
+      this.view3.paused = false;
+      this.view4.paused = false;
+    });
+    sim.addEventListener('stop', () => {
+      this.view3.stop();
+      this.view4.stop();
+    });
+    sim.addEventListener('start', () => {
+      this.view3.start();
+      this.view4.start();
+    });
     this.view3.addSeries('dx', {
       getValue: () => this.dx,
       min: -32,
       max: 32,
+    });
+    this.view4.addSeries('blob', {
+      getValue: () => vec3.fromValues(this.maxBlob.centroid[1], this.maxBlob.centroid[0], this.maxBlob.count / 4),
+      min: vec2.fromValues(0, 0),
+      max: vec2.fromValues(64, 64),
     });
   }
 
@@ -64,8 +85,8 @@ export class Robot extends Entity {
     this.view1.setData(binMap.data);
     const blobs = blobify(binMap);
     // this.output2.value = Array.from(blobs.values()).map(b => JSON.stringify(b)).join('\n');
-    let maxBlob: blob = { centroid: [0, 0], count: 0 };
-    for (let [label, b] of blobs) {
+    let maxBlob: blob = { centroid: vec2.create(), count: 0 };
+    for (let b of blobs.values()) {
       if (b.count > maxBlob.count) maxBlob = b;
     }
     return maxBlob;
@@ -74,9 +95,9 @@ export class Robot extends Entity {
   /** Handler for the camera's `capture` event. */
   private onCapture(event: CustomEvent<ImageData>): void {
     this.view0.setData(event.detail.data);
-    const b = this.findTarget(event.detail);
+    this.maxBlob = this.findTarget(event.detail);
     const targetX = this.camera.width / 2;
-    this.dx = b.centroid[1] - targetX;
+    this.dx = this.maxBlob.centroid[1] - targetX;
     // this.output1.value = JSON.stringify({
     //   dx: dx.toFixed(2),
     //   cr: b.centroid[0].toFixed(2),

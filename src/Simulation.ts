@@ -61,9 +61,10 @@ export class Simulation extends EventTargetShim {
 
   public get timeScale() { return this.timeMultiplier; }
   public set timeScale(newScale: number) {
+    this.timeMultiplier = newScale;
+    if (this.isPaused || this.isStopped) return;
     const passedTime = performance.now() - this.state.time;
     clearTimeout(this.stepTimer);
-    this.timeMultiplier = newScale;
     this.stepTimer = setTimeout(this.step.bind(this), this.timestep / this.timeMultiplier - passedTime);
   }
 
@@ -84,12 +85,12 @@ export class Simulation extends EventTargetShim {
     };
   }
 
-  public reset() {
+  public reset(): void {
     this.state = this.createInitialState();
     this.dispatchEvent(new CustomEvent<SimState>('update', { detail: this.state }));
   }
 
-  public addEntity(entity: Entity) {
+  public addEntity(entity: Entity): void {
     this.state.entities.add(entity);
     entity.initialize(this);
   }

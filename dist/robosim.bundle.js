@@ -206,6 +206,20 @@ function create$2() {
   return out;
 }
 /**
+ * Creates a new vec2 initialized with the given values
+ *
+ * @param {Number} x X component
+ * @param {Number} y Y component
+ * @returns {vec2} a new 2D vector
+ */
+
+function fromValues$1(x, y) {
+  var out = new ARRAY_TYPE(2);
+  out[0] = x;
+  out[1] = y;
+  return out;
+}
+/**
  * Perform some operation over an array of vec2s.
  *
  * @param {Array} a the array of vectors to iterate over
@@ -280,9 +294,11 @@ class Simulation extends EventTargetShim {
     }
     get timeScale() { return this.timeMultiplier; }
     set timeScale(newScale) {
+        this.timeMultiplier = newScale;
+        if (this.isPaused || this.isStopped)
+            return;
         const passedTime = performance.now() - this.state.time;
         clearTimeout(this.stepTimer);
-        this.timeMultiplier = newScale;
         this.stepTimer = setTimeout(this.step.bind(this), this.timestep / this.timeMultiplier - passedTime);
     }
     createInitialState() {
@@ -403,6 +419,90 @@ class ImageDataView {
 function normalize(value, min, max) {
     return (value - min) / (max - min);
 }
+class PlotXYView {
+    constructor() {
+        this.name = 'image';
+        this.series = new Map();
+        this.paused = true;
+        this.stopped = true;
+        this.colors = (function* () {
+            let i = 0;
+            const colors = [
+                '#f28779',
+                '#5c6773',
+                '#ffa759',
+                '#d4bfff',
+                '#ffd580',
+                '#73d0ff',
+                '#bae67e',
+                '#95e6cb',
+                '#cbccc6',
+            ];
+            while (true)
+                yield colors[i++ % colors.length];
+        })();
+        this.canvas = document.createElement('canvas');
+        const ctx = this.canvas.getContext('2d', { alpha: true });
+        if (ctx === null)
+            throw new Error('Failed to get canvas context');
+        this.ctx = ctx;
+        this.canvas.width = 64 * 3;
+        this.canvas.height = this.canvas.width;
+        // requestAnimationFrame(this.draw.bind(this));
+        this.addSeries('zero', {
+            value: fromValues(0, 0, 1),
+            color: '#60697a',
+            min: fromValues$1(-1, -1),
+            max: fromValues$1(1, 1),
+        });
+    }
+    stop() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.stopped = true;
+    }
+    start() {
+        this.paused = false;
+        this.stopped = false;
+        requestAnimationFrame(this.draw.bind(this));
+    }
+    draw() {
+        if (!this.stopped)
+            requestAnimationFrame(this.draw.bind(this));
+        if (this.paused)
+            return;
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        for (let data of this.series.values()) {
+            let value;
+            if (typeof data.getValue !== 'undefined')
+                value = data.getValue();
+            else if (typeof data.value !== 'undefined')
+                value = data.value;
+            else
+                throw new Error('no defined data');
+            const x = this.canvas.width * normalize(value[0], data.min[0], data.max[0]);
+            const y = this.canvas.height * normalize(value[1], data.min[1], data.max[1]);
+            const radius = value[2];
+            this.ctx.fillStyle = data.color;
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, radius, 0, 2 * Math.PI);
+            this.ctx.fill();
+        }
+    }
+    addSeries(name, { value, getValue, color, min, max }) {
+        if (!color)
+            color = this.colors.next().value;
+        this.series.set(name, { value, getValue, color, min, max });
+    }
+    setValue(seriesName, value) {
+        const series = this.series.get(seriesName);
+        if (!series)
+            throw new Error(`Series '${seriesName}' not found.`);
+        series.value = value;
+    }
+    render() {
+        return this.canvas;
+    }
+}
 class PlotTimeSeriesView {
     constructor() {
         this.name = 'image';
@@ -437,22 +537,10 @@ class PlotTimeSeriesView {
         // requestAnimationFrame(this.draw.bind(this));
         this.addSeries('zero', {
             value: 0,
-            color: '#191e2a',
+            color: '#60697a',
             min: -1,
             max: 1,
         });
-        // this.addSeries('sin(t/500)', {
-        //   getValue(t: number) { return Math.sin(t / 500); },
-        //   // color: 'red',
-        //   min: -2,
-        //   max: 2,
-        // });
-        // this.addSeries('cos(t/100)', {
-        //   getValue(t: number) { return Math.cos(t / 100); },
-        //   // color: 'blue',
-        //   min: -4,
-        //   max: 4,
-        // });
     }
     stop() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -718,7 +806,7 @@ function blobify(image) {
                 continue;
             const b = blobs.get(label);
             if (!b)
-                blobs.set(label, { count: 1, centroid: [i, j] });
+                blobs.set(label, { count: 1, centroid: fromValues$1(i, j) });
             else {
                 b.count += 1;
                 b.centroid[0] += i;
@@ -738,6 +826,7 @@ class Robot extends Entity {
     constructor(pos = create(), dir = create$1()) {
         super(pos, dir);
         this.dx = 0;
+        this.maxBlob = { centroid: create$2(), count: 0 };
         // Camera re-uses the same position and direction vectors
         this.camera = new Camera({ width: 64, height: 64, pos, dir });
         this.camera.addEventListener('capture', this.onCapture.bind(this));
@@ -750,24 +839,42 @@ class Robot extends Entity {
         this.view2 = new ImageDataView({ width: 64, height: 64 });
         this.view2.name = 'detect red';
         this.view3 = new PlotTimeSeriesView();
+        this.view4 = new PlotXYView();
         this.inspector.addView(this.view0);
         this.inspector.addView(this.view2);
         this.inspector.addView(this.view1);
+        this.inspector.addView(this.view4);
         this.inspector.addView(this.view3);
         // document.body.appendChild(this.output1);
         // document.body.appendChild(this.output2);
     }
-    ;
     initialize(sim) {
         this.camera.initialize(sim);
-        sim.addEventListener('pause', () => this.view3.paused = true);
-        sim.addEventListener('resume', () => this.view3.paused = false);
-        sim.addEventListener('stop', () => this.view3.stop());
-        sim.addEventListener('start', () => this.view3.start());
+        sim.addEventListener('pause', () => {
+            this.view3.paused = true;
+            this.view4.paused = true;
+        });
+        sim.addEventListener('resume', () => {
+            this.view3.paused = false;
+            this.view4.paused = false;
+        });
+        sim.addEventListener('stop', () => {
+            this.view3.stop();
+            this.view4.stop();
+        });
+        sim.addEventListener('start', () => {
+            this.view3.start();
+            this.view4.start();
+        });
         this.view3.addSeries('dx', {
             getValue: () => this.dx,
             min: -32,
             max: 32,
+        });
+        this.view4.addSeries('blob', {
+            getValue: () => fromValues(this.maxBlob.centroid[1], this.maxBlob.centroid[0], this.maxBlob.count / 4),
+            min: fromValues$1(0, 0),
+            max: fromValues$1(64, 64),
         });
     }
     /** Given an image, find the largest red object. */
@@ -778,8 +885,8 @@ class Robot extends Entity {
         this.view1.setData(binMap.data);
         const blobs = blobify(binMap);
         // this.output2.value = Array.from(blobs.values()).map(b => JSON.stringify(b)).join('\n');
-        let maxBlob = { centroid: [0, 0], count: 0 };
-        for (let [label, b] of blobs) {
+        let maxBlob = { centroid: create$2(), count: 0 };
+        for (let b of blobs.values()) {
             if (b.count > maxBlob.count)
                 maxBlob = b;
         }
@@ -788,9 +895,9 @@ class Robot extends Entity {
     /** Handler for the camera's `capture` event. */
     onCapture(event) {
         this.view0.setData(event.detail.data);
-        const b = this.findTarget(event.detail);
+        this.maxBlob = this.findTarget(event.detail);
         const targetX = this.camera.width / 2;
-        this.dx = b.centroid[1] - targetX;
+        this.dx = this.maxBlob.centroid[1] - targetX;
         // this.output1.value = JSON.stringify({
         //   dx: dx.toFixed(2),
         //   cr: b.centroid[0].toFixed(2),
@@ -947,3 +1054,4 @@ window.addEventListener('load', () => {
         $time.value = formatTime(state.time);
     }));
 });
+//# sourceMappingURL=robosim.bundle.js.map

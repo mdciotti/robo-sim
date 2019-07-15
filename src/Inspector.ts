@@ -1,4 +1,4 @@
-import { vec3 } from 'gl-matrix';
+import { vec3, vec2 } from 'gl-matrix';
 
 export interface InspectorView {
   name: string;
@@ -96,6 +96,93 @@ function normalize(value: number, min: number, max: number): number {
   return (value - min) / (max - min);
 }
 
+export class PlotXYView implements InspectorView {
+  private canvas: HTMLCanvasElement;
+  private ctx: CanvasRenderingContext2D;
+  public name: string = 'image';
+  private series: Map<string, { value?: vec3, getValue?: () => vec3, color: string, min: vec2, max: vec2 }> = new Map();
+  public paused: boolean = true;
+  private stopped: boolean = true;
+
+  private colors = (function*() {
+    let i = 0;
+    const colors = [
+      '#f28779',
+      '#5c6773',
+      '#ffa759',
+      '#d4bfff',
+      '#ffd580',
+      '#73d0ff',
+      '#bae67e',
+      '#95e6cb',
+      '#cbccc6',
+    ];
+    while (true) yield colors[i++ % colors.length];
+  })();
+
+  constructor() {
+    this.canvas = document.createElement('canvas');
+    const ctx = this.canvas.getContext('2d', { alpha: true });
+    if (ctx === null) throw new Error('Failed to get canvas context');
+    this.ctx = ctx;
+    this.canvas.width = 64 * 3;
+    this.canvas.height = this.canvas.width;
+    // requestAnimationFrame(this.draw.bind(this));
+
+    this.addSeries('zero', {
+      value: vec3.fromValues(0, 0, 1),
+      color: '#60697a',
+      min: vec2.fromValues(-1, -1),
+      max: vec2.fromValues(1, 1),
+    });
+  }
+
+  public stop(): void {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.stopped = true;
+  }
+
+  public start(): void {
+    this.paused = false;
+    this.stopped = false;
+    requestAnimationFrame(this.draw.bind(this));
+  }
+
+  private draw(): void {
+    if (!this.stopped) requestAnimationFrame(this.draw.bind(this));
+    if (this.paused) return;
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    for (let data of this.series.values()) {
+      let value: vec3;
+      if (typeof data.getValue !== 'undefined') value = data.getValue();
+      else if (typeof data.value !== 'undefined') value = data.value;
+      else throw new Error('no defined data');
+      const x = this.canvas.width * normalize(value[0], data.min[0], data.max[0]);
+      const y = this.canvas.height * normalize(value[1], data.min[1], data.max[1]);
+      const radius = value[2];
+      this.ctx.fillStyle = data.color;
+      this.ctx.beginPath();
+      this.ctx.arc(x, y, radius, 0, 2 * Math.PI);
+      this.ctx.fill();
+    }
+  }
+
+  public addSeries(name: string, { value, getValue, color, min, max }: { value?: vec3, getValue?: () => vec3, color?: string, min: vec2, max: vec2 }): void {
+    if (!color) color = this.colors.next().value;
+    this.series.set(name, { value, getValue, color, min, max });
+  }
+
+  public setValue(seriesName: string, value: vec3): void {
+    const series = this.series.get(seriesName);
+    if (!series) throw new Error(`Series '${seriesName}' not found.`);
+    series.value = value;
+  }
+
+  public render(): HTMLCanvasElement {
+    return this.canvas;
+  }
+}
+
 export class PlotTimeSeriesView implements InspectorView {
   private canvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
@@ -133,22 +220,10 @@ export class PlotTimeSeriesView implements InspectorView {
 
     this.addSeries('zero', {
       value: 0,
-      color: '#191e2a',
+      color: '#60697a',
       min: -1,
       max: 1,
     });
-    // this.addSeries('sin(t/500)', {
-    //   getValue(t: number) { return Math.sin(t / 500); },
-    //   // color: 'red',
-    //   min: -2,
-    //   max: 2,
-    // });
-    // this.addSeries('cos(t/100)', {
-    //   getValue(t: number) { return Math.cos(t / 100); },
-    //   // color: 'blue',
-    //   min: -4,
-    //   max: 4,
-    // });
   }
 
   public stop(): void {
