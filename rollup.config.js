@@ -5,7 +5,8 @@ export default {
   input: 'src/robosim.ts',
   output: {
     file: 'dist/robosim.bundle.js',
-    format: 'esm'
+    format: 'esm',
+    sourcemap: true,
   },
   plugins: [ typescript(), resolve() ]
 };
